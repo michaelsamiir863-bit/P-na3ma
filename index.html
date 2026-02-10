@@ -11,93 +11,119 @@
 
 <style>
 body{
-  font-family: Tahoma, Arial;
+  font-family:Tahom,aArial;
   background:#f4f6f8;
-  margin:0;
-  padding:15px;
+  margin:0;padding:10px
 }
 .container{
   background:#fff;
+  border-radius:10px;
   padding:15px;
-  border-radius:8px;
-  box-shadow:0 2px 8px rgba(0,0,0,.1);
+  box-shadow:0 2px 8px rgba(0,0,0,.15)
 }
-h2{
-  margin:0 0 10px;
-  text-align:center;
-}
+h2{text-align:center;margin:0 0 10px}
+
 .row{
   display:grid;
-  grid-template-columns: repeat(4,1fr);
-  gap:10px;
-  margin-bottom:10px;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-bottom:8px
 }
-input, textarea{
-  width:100%;
-  padding:8px;
+input,textarea{
+  padding:7px;
   border:1px solid #ccc;
-  border-radius:5px;
+  border-radius:6px;
+  width:100%
 }
-textarea{ resize:none }
+textarea{resize:none}
 
-.search-box{
-  position:relative;
-}
-.search-results{
+.search-box{position:relative}
+.results{
   position:absolute;
   background:#fff;
   border:1px solid #ccc;
   width:100%;
-  max-height:150px;
+  max-height:160px;
   overflow:auto;
-  z-index:10;
+  z-index:99
 }
-.search-results div{
+.results div{
   padding:6px;
-  cursor:pointer;
+  cursor:pointer
 }
-.search-results div:hover{
-  background:#eee;
-}
+.results div:hover{background:#eee}
 
 table{
   width:100%;
   border-collapse:collapse;
-  margin-top:10px;
+  margin-top:10px
 }
 th,td{
   border:1px solid #000;
-  padding:6px;
+  padding:5px;
   text-align:center;
+  font-size:14px
 }
-th{
-  background:#eee;
-}
+th{background:#eee}
 
-.total-box{
-  display:grid;
-  grid-template-columns: repeat(4,1fr);
+.buttons{
+  display:flex;
   gap:10px;
   margin-top:10px;
+  flex-wrap:wrap
 }
-.total-box div{
-  background:#f1f1f1;
-  padding:10px;
-  border-radius:5px;
-  text-align:center;
-  font-weight:bold;
-}
-
 button{
   padding:10px;
   border:none;
-  border-radius:5px;
+  border-radius:6px;
   cursor:pointer;
-  font-size:15px;
+  font-size:15px
 }
-.btn-add{background:#0d6efd;color:#fff}
-.btn-save{background:#198754;color:#fff}
-.btn-prev{background:#6c757d;color:#fff}
+.add{background:#0d6efd;color:#fff}
+.save{background:#198754;color:#fff}
+.prev{background:#6c757d;color:#fff}
+.admin{background:#111;color:#fff;width:100%}
+
+.totals{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-top:10px
+}
+.totals div{
+  background:#f1f1f1;
+  padding:8px;
+  border-radius:6px;
+  text-align:center;
+  font-weight:bold
+}
+
+/* modal */
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  z-index:100
+}
+.modal-content{
+  background:#fff;
+  margin:5%;
+  padding:10px;
+  border-radius:10px;
+  max-height:85%;
+  overflow:auto
+}
+.close{
+  float:left;
+  cursor:pointer;
+  font-size:20px
+}
+
+@media(max-width:768px){
+  .row{grid-template-columns:1fr 1fr}
+  .totals{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 
@@ -110,167 +136,200 @@ button{
 <div class="row">
   <input type="date" id="date">
   <input type="text" id="day" placeholder="اليوم" readonly>
-  
+
   <div class="search-box">
-    <input type="text" id="supplierSearch" placeholder="بحث عن مورد">
-    <div class="search-results" id="supplierResults"></div>
+    <input id="supplierSearch" placeholder="بحث عن مورد">
+    <div class="results" id="supplierResults"></div>
   </div>
 
-  <input type="text" id="notes" placeholder="ملاحظات">
+  <input id="notes" placeholder="ملاحظات">
 </div>
 
 <!-- إضافة صنف -->
 <div class="row">
   <div class="search-box">
-    <input type="text" id="itemSearch" placeholder="بحث عن صنف">
-    <div class="search-results" id="itemResults"></div>
+    <input id="itemSearch" placeholder="بحث عن صنف">
+    <div class="results" id="itemResults"></div>
   </div>
   <input type="number" id="qty" placeholder="الكمية">
   <input type="number" id="bonus" placeholder="البونص">
   <input type="number" id="buyPrice" placeholder="سعر الشراء">
 </div>
 
-<button class="btn-add" onclick="addItem()">➕ إضافة الصنف</button>
+<button class="add" onclick="addItem()">➕ إضافة الصنف</button>
 
 <table>
 <thead>
 <tr>
-<th>الصنف</th>
-<th>الكمية</th>
-<th>البونص</th>
-<th>سعر الجمهور</th>
-<th>سعر الشراء</th>
-<th>خصم %</th>
-<th>الإجمالي</th>
+<th>الصنف</th><th>الكمية</th><th>البونص</th>
+<th>سعر الجمهور</th><th>سعر الشراء</th>
+<th>خصم %</th><th>الإجمالي</th>
 </tr>
 </thead>
 <tbody id="itemsBody"></tbody>
 </table>
 
-<div class="total-box">
-  <div>إجمالي الجمهور<br><span id="totalPublic">0</span></div>
-  <div>إجمالي الشراء<br><span id="totalBuy">0</span></div>
-  <div>إجمالي الخصم<br><span id="totalDiscount">0</span></div>
-  <div>صافي الفاتورة<br><span id="netTotal">0</span></div>
+<div class="totals">
+<div>إجمالي الجمهور<br><span id="tp">0</span></div>
+<div>إجمالي الشراء<br><span id="tb">0</span></div>
+<div>إجمالي الخصم<br><span id="td">0</span></div>
+<div>صافي الفاتورة<br><span id="net">0</span></div>
 </div>
 
-<br>
-<button class="btn-save" onclick="saveInvoice()">💾 حفظ الفاتورة</button>
-<button class="btn-prev" onclick="openPrev()">📄 فواتير سابقة</button>
+<div class="buttons">
+<button class="save" onclick="saveInvoice()">💾 حفظ</button>
+<button class="prev" onclick="openModal()">📄 فواتير سابقة</button>
+</div>
+
+<a target="_blank" href="https://sites.google.com/view/p-na3ma/%D8%A7%D9%84%D8%A7%D8%B5%D9%86%D8%A7%D9%81">
+<button class="admin">⚙️ صفحة الإدارة</button>
+</a>
+</div>
+
+<!-- modal -->
+<div class="modal" id="modal">
+<div class="modal-content">
+<span class="close" onclick="closeModal()">✖</span>
+<h3>الفواتير السابقة</h3>
+
+<div class="row">
+<input type="date" id="filterDate">
+<input placeholder="بحث باسم المورد" id="filterSupplier">
+</div>
+
+<table>
+<thead>
+<tr>
+<th>التاريخ</th>
+<th>المورد</th>
+<th>الإجمالي</th>
+<th>طباعة</th>
+</tr>
+</thead>
+<tbody id="prevBody"></tbody>
+</table>
+
+</div>
 </div>
 
 <script>
-const firebaseConfig={
-  databaseURL:"https://system-ph-77a0a-default-rtdb.firebaseio.com/"
-};
-firebase.initializeApp(firebaseConfig);
+const app=firebase.initializeApp({
+ databaseURL:"https://system-ph-77a0a-default-rtdb.firebaseio.com/"
+});
 const db=firebase.database();
 
-let selectedItem=null;
-let selectedSupplier=null;
-let items=[];
+let suppliers={},itemsDB={},selectedSupplier=null,selectedItem=null,items=[];
 
-// اليوم تلقائي
-document.getElementById("date").addEventListener("change",e=>{
-  const d=new Date(e.target.value);
-  document.getElementById("day").value=
-  d.toLocaleDateString('ar-EG',{weekday:'long'});
-});
+/* اليوم */
+date.onchange=()=>{
+ const d=new Date(date.value);
+ day.value=d.toLocaleDateString('ar-EG',{weekday:'long'});
+};
 
-// بحث موردين
-db.ref("suppliers").on("value",s=>{
-  window.suppliers=s.val()||{};
-});
+/* تحميل البيانات */
+db.ref("suppliers").on("value",s=>suppliers=s.val()||{});
+db.ref("items").on("value",s=>itemsDB=s.val()||{});
+
+/* بحث مورد */
 supplierSearch.oninput=()=>{
-  supplierResults.innerHTML="";
-  Object.values(suppliers||{}).filter(x=>x.name.includes(supplierSearch.value))
-  .forEach(s=>{
-    const d=document.createElement("div");
-    d.textContent=s.name;
-    d.onclick=()=>{
-      supplierSearch.value=s.name;
-      selectedSupplier=s;
-      supplierResults.innerHTML="";
-    }
-    supplierResults.appendChild(d);
-  })
-}
+ supplierResults.innerHTML="";
+ Object.values(suppliers).filter(s=>s.name.includes(supplierSearch.value))
+ .forEach(s=>{
+  const d=document.createElement("div");
+  d.textContent=s.name;
+  d.onclick=()=>{supplierSearch.value=s.name;selectedSupplier=s;supplierResults.innerHTML=""};
+  supplierResults.appendChild(d);
+ });
+};
 
-// بحث أصناف
-db.ref("items").on("value",s=>{
-  window.itemsDB=s.val()||{};
-});
+/* بحث صنف */
 itemSearch.oninput=()=>{
-  itemResults.innerHTML="";
-  Object.values(itemsDB||{}).filter(x=>x.name.includes(itemSearch.value))
-  .forEach(i=>{
-    const d=document.createElement("div");
-    d.textContent=i.name;
-    d.onclick=()=>{
-      itemSearch.value=i.name;
-      selectedItem=i;
-      itemResults.innerHTML="";
-    }
-    itemResults.appendChild(d);
-  })
-}
+ itemResults.innerHTML="";
+ Object.values(itemsDB).filter(i=>i.name.includes(itemSearch.value))
+ .forEach(i=>{
+  const d=document.createElement("div");
+  d.textContent=i.name;
+  d.onclick=()=>{itemSearch.value=i.name;selectedItem=i;itemResults.innerHTML=""};
+  itemResults.appendChild(d);
+ });
+};
 
+/* إضافة صنف */
 function addItem(){
-  if(!selectedItem)return alert("اختر صنف");
-  const q=+qty.value,b=+bonus.value,p=+buyPrice.value;
-  const pub=+selectedItem.publicPrice;
-  const disc=((pub-p)/pub*100).toFixed(1);
-  const total=q*p;
-  items.push({name:selectedItem.name,q,b,pub,p,disc,total});
-  render();
+ if(!selectedItem)return alert("اختر صنف");
+ const q=+qty.value,b=+bonus.value,p=+buyPrice.value;
+ const pub=+selectedItem.publicPrice;
+ const disc=((pub-p)/pub*100).toFixed(1);
+ const total=q*p;
+ items.push({name:selectedItem.name,q,b,pub,p,disc,total});
+ render();
 }
 
+/* عرض */
 function render(){
-  itemsBody.innerHTML="";
-  let tp=0,tb=0;
-  items.forEach(i=>{
-    tp+=i.q*i.pub;
-    tb+=i.total;
-    itemsBody.innerHTML+=`
-    <tr>
-      <td>${i.name}</td>
-      <td>${i.q}</td>
-      <td>${i.b}</td>
-      <td>${i.pub}</td>
-      <td>${i.p}</td>
-      <td>${i.disc}%</td>
-      <td>${i.total}</td>
-    </tr>`;
-  });
-  totalPublic.textContent=tp;
-  totalBuy.textContent=tb;
-  totalDiscount.textContent=(tp-tb).toFixed(2);
-  netTotal.textContent=tb;
+ itemsBody.innerHTML="";
+ let TP=0,TB=0;
+ items.forEach(i=>{
+  TP+=i.q*i.pub; TB+=i.total;
+  itemsBody.innerHTML+=`<tr>
+  <td>${i.name}</td><td>${i.q}</td><td>${i.b}</td>
+  <td>${i.pub}</td><td>${i.p}</td>
+  <td>${i.disc}%</td><td>${i.total}</td></tr>`;
+ });
+ tp.textContent=TP;
+ tb.textContent=TB;
+ td.textContent=(TP-TB).toFixed(2);
+ net.textContent=TB;
 }
 
+/* حفظ */
 function saveInvoice(){
-  const id=Date.now();
-  db.ref("purchaseInvoices/"+id).set({
-    date:date.value,
-    day:day.value,
-    supplier:selectedSupplier.name,
-    notes:notes.value,
-    items,
-    totals:{
-      public:totalPublic.textContent,
-      buy:totalBuy.textContent,
-      discount:totalDiscount.textContent,
-      net:netTotal.textContent
-    }
-  });
-  alert("تم حفظ الفاتورة");
+ if(!selectedSupplier)return alert("اختر مورد");
+ const id=Date.now();
+ db.ref("purchaseInvoices/"+id).set({
+  date:date.value,day:day.value,
+  supplier:selectedSupplier.name,
+  notes:notes.value,
+  items,totals:{tp:tp.textContent,tb:tb.textContent,td:td.textContent,net:net.textContent}
+ });
+ alert("تم الحفظ");
 }
 
-function openPrev(){
-  alert("صفحة الفواتير السابقة + الطباعة الحرارية تكون في صفحة منفصلة");
+/* modal */
+function openModal(){modal.style.display="block";loadPrev()}
+function closeModal(){modal.style.display="none"}
+
+function loadPrev(){
+ prevBody.innerHTML="";
+ db.ref("purchaseInvoices").once("value",s=>{
+  s.forEach(c=>{
+   const v=c.val();
+   if(filterDate.value && v.date!==filterDate.value)return;
+   if(filterSupplier.value && !v.supplier.includes(filterSupplier.value))return;
+   prevBody.innerHTML+=`<tr>
+   <td>${v.date}</td><td>${v.supplier}</td><td>${v.totals.net}</td>
+   <td><button onclick='printInv(${JSON.stringify(v)})'>🖨️</button></td>
+   </tr>`;
+  });
+ });
+}
+
+/* طباعة رسيت */
+function printInv(v){
+ const w=window.open("","", "width=300");
+ let h=`<h3>فاتورة مشتريات</h3>
+ <p>التاريخ: ${v.date}</p>
+ <p>المورد: ${v.supplier}</p>
+ <table border=1 width=100%>
+ <tr><th>الصنف</th><th>ك</th><th>س ج</th><th>س ش</th><th>%</th><th>إجمالي</th></tr>`;
+ v.items.forEach(i=>{
+  h+=`<tr><td>${i.name}</td><td>${i.q}</td><td>${i.pub}</td><td>${i.p}</td><td>${i.disc}</td><td>${i.total}</td></tr>`;
+ });
+ h+=`</table><h4>الصافي: ${v.totals.net}</h4>`;
+ w.document.write(h);
+ w.print();
 }
 </script>
 
 </body>
 </html>
-
