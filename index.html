@@ -2,81 +2,63 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>نظام فواتير المشتريات</title>
+<title>فاتورة مشتريات</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-*{box-sizing:border-box}
 body{
-  font-family:tahoma;
-  background:#eef1f4;
+  font-family: Tahoma, Arial;
+  background:#f4f6f8;
   margin:0;
-  padding:12px;
+  padding:15px;
 }
-
-/* ====== Layout ====== */
 .container{
-  max-width:1100px;
-  margin:auto;
-}
-
-.card{
   background:#fff;
-  border-radius:10px;
-  padding:12px;
-  margin-bottom:15px;
-  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  padding:15px;
+  border-radius:8px;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
 }
-
-.card h3{
+h2{
   margin:0 0 10px;
-  font-size:15px;
-  border-bottom:1px solid #ddd;
-  padding-bottom:6px;
+  text-align:center;
 }
-
-.grid{
+.row{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
+  grid-template-columns: repeat(4,1fr);
+  gap:10px;
+  margin-bottom:10px;
 }
-
-input,button{
-  padding:7px;
-  font-size:13px;
-  border-radius:6px;
+input, textarea{
+  width:100%;
+  padding:8px;
   border:1px solid #ccc;
+  border-radius:5px;
 }
+textarea{ resize:none }
 
-button{
-  background:#1e88e5;
-  color:#fff;
-  border:none;
-  cursor:pointer;
+.search-box{
+  position:relative;
 }
-
-button.secondary{
-  background:#555;
-}
-
-button.danger{
-  background:#c62828;
-}
-
-.list{
+.search-results{
+  position:absolute;
+  background:#fff;
   border:1px solid #ccc;
-  max-height:120px;
+  width:100%;
+  max-height:150px;
   overflow:auto;
-  margin-top:4px;
+  z-index:10;
 }
-
-.list div{
+.search-results div{
   padding:6px;
   cursor:pointer;
 }
-.list div:hover{background:#f0f0f0}
+.search-results div:hover{
+  background:#eee;
+}
 
 table{
   width:100%;
@@ -85,251 +67,210 @@ table{
 }
 th,td{
   border:1px solid #000;
-  padding:5px;
+  padding:6px;
   text-align:center;
-  font-size:12px;
+}
+th{
+  background:#eee;
 }
 
-/* ====== Modal ====== */
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  display:none;
-  align-items:center;
-  justify-content:center;
+.total-box{
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:10px;
+  margin-top:10px;
+}
+.total-box div{
+  background:#f1f1f1;
+  padding:10px;
+  border-radius:5px;
+  text-align:center;
+  font-weight:bold;
 }
 
-.modal-content{
-  background:#fff;
-  width:90%;
-  max-width:800px;
-  padding:12px;
-  border-radius:10px;
+button{
+  padding:10px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  font-size:15px;
 }
+.btn-add{background:#0d6efd;color:#fff}
+.btn-save{background:#198754;color:#fff}
+.btn-prev{background:#6c757d;color:#fff}
 </style>
 </head>
+
 <body>
 
 <div class="container">
+<h2>فاتورة مشتريات</h2>
 
-<!-- =================== بيانات الفاتورة =================== -->
-<div class="card">
-<h3>📄 بيانات الفاتورة</h3>
-<div class="grid">
-  <input type="date" id="invDate" onchange="setDay()">
-  <input id="invDay" placeholder="اليوم" disabled>
-
-  <div>
-    <input id="supplierSearch" placeholder="بحث مورد" oninput="filterSuppliers()">
-    <div id="supplierList" class="list"></div>
+<!-- بيانات الفاتورة -->
+<div class="row">
+  <input type="date" id="date">
+  <input type="text" id="day" placeholder="اليوم" readonly>
+  
+  <div class="search-box">
+    <input type="text" id="supplierSearch" placeholder="بحث عن مورد">
+    <div class="search-results" id="supplierResults"></div>
   </div>
 
-  <input id="notes" placeholder="ملاحظات">
-</div>
-<b>المورد المختار:</b> <span id="selectedSupplier"></span>
+  <input type="text" id="notes" placeholder="ملاحظات">
 </div>
 
-<!-- =================== إضافة صنف =================== -->
-<div class="card">
-<h3>📦 إضافة صنف</h3>
-
-<input id="productSearch" placeholder="بحث صنف" oninput="filterProducts()">
-<div id="productList" class="list"></div>
-<b>الصنف:</b> <span id="selectedProduct"></span>
-
-<div class="grid" style="margin-top:8px">
-  <input id="qty" type="number" placeholder="الكمية">
-  <input id="buyPrice" type="number" placeholder="سعر الشراء">
-  <input id="publicPrice" disabled placeholder="سعر الجمهور">
-  <button onclick="addItem()">➕ إضافة</button>
-</div>
+<!-- إضافة صنف -->
+<div class="row">
+  <div class="search-box">
+    <input type="text" id="itemSearch" placeholder="بحث عن صنف">
+    <div class="search-results" id="itemResults"></div>
+  </div>
+  <input type="number" id="qty" placeholder="الكمية">
+  <input type="number" id="bonus" placeholder="البونص">
+  <input type="number" id="buyPrice" placeholder="سعر الشراء">
 </div>
 
-<!-- =================== جدول الأصناف =================== -->
-<div class="card">
-<h3>🧾 الأصناف</h3>
+<button class="btn-add" onclick="addItem()">➕ إضافة الصنف</button>
+
 <table>
 <thead>
 <tr>
-<th>الصنف</th><th>الكمية</th><th>سعر الجمهور</th>
-<th>سعر الشراء</th><th>خصم %</th>
+<th>الصنف</th>
+<th>الكمية</th>
+<th>البونص</th>
+<th>سعر الجمهور</th>
+<th>سعر الشراء</th>
+<th>خصم %</th>
+<th>الإجمالي</th>
 </tr>
 </thead>
-<tbody id="itemsTable"></tbody>
+<tbody id="itemsBody"></tbody>
 </table>
+
+<div class="total-box">
+  <div>إجمالي الجمهور<br><span id="totalPublic">0</span></div>
+  <div>إجمالي الشراء<br><span id="totalBuy">0</span></div>
+  <div>إجمالي الخصم<br><span id="totalDiscount">0</span></div>
+  <div>صافي الفاتورة<br><span id="netTotal">0</span></div>
 </div>
 
-<!-- =================== إجماليات =================== -->
-<div class="card">
-<h3>💰 الإجماليات</h3>
-<p>إجمالي الجمهور: <b id="totalPublic">0</b></p>
-<p>إجمالي الشراء: <b id="totalBuy">0</b></p>
-<p>إجمالي الخصم: <b id="totalDiscount">0</b></p>
-<p>الصافي: <b id="netTotal">0</b></p>
-<button onclick="saveInvoice()">💾 حفظ الفاتورة</button>
-</div>
-
-<button class="secondary" onclick="openModal()">📂 عرض الفواتير السابقة</button>
-
-</div>
-
-<!-- =================== Modal =================== -->
-<div class="modal" id="modal">
-<div class="modal-content">
-<h3>📂 الفواتير السابقة</h3>
-
-<div class="grid">
-  <input type="date" id="filterDate">
-  <input id="filterSupplier" placeholder="اسم المورد">
-  <button onclick="applyFilter()">بحث</button>
-  <button class="danger" onclick="closeModal()">إغلاق</button>
-</div>
-
-<div id="oldInvoices"></div>
-</div>
+<br>
+<button class="btn-save" onclick="saveInvoice()">💾 حفظ الفاتورة</button>
+<button class="btn-prev" onclick="openPrev()">📄 فواتير سابقة</button>
 </div>
 
 <script>
-firebase.initializeApp({
+const firebaseConfig={
   databaseURL:"https://system-ph-77a0a-default-rtdb.firebaseio.com/"
-});
+};
+firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
-let products={},suppliers={},items=[];
-let currentProduct=null,currentSupplier=null;
+let selectedItem=null;
+let selectedSupplier=null;
+let items=[];
 
-/* تحميل */
-db.ref("products").on("value",s=>products=s.val()||{});
-db.ref("suppliers").on("value",s=>suppliers=s.val()||{});
+// اليوم تلقائي
+document.getElementById("date").addEventListener("change",e=>{
+  const d=new Date(e.target.value);
+  document.getElementById("day").value=
+  d.toLocaleDateString('ar-EG',{weekday:'long'});
+});
 
-/* اليوم */
-function setDay(){
-  const d=new Date(invDate.value);
-  invDay.value=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"][d.getDay()];
-}
-
-/* المورد */
-function filterSuppliers(){
-  supplierList.innerHTML="";
-  const q=supplierSearch.value;
-  for(let id in suppliers){
-    if(suppliers[id].name.includes(q)){
-      supplierList.innerHTML+=`<div onclick="selectSupplier('${suppliers[id].name}')">${suppliers[id].name}</div>`;
+// بحث موردين
+db.ref("suppliers").on("value",s=>{
+  window.suppliers=s.val()||{};
+});
+supplierSearch.oninput=()=>{
+  supplierResults.innerHTML="";
+  Object.values(suppliers||{}).filter(x=>x.name.includes(supplierSearch.value))
+  .forEach(s=>{
+    const d=document.createElement("div");
+    d.textContent=s.name;
+    d.onclick=()=>{
+      supplierSearch.value=s.name;
+      selectedSupplier=s;
+      supplierResults.innerHTML="";
     }
-  }
-}
-function selectSupplier(n){
-  currentSupplier=n;
-  selectedSupplier.innerText=n;
-  supplierList.innerHTML="";
-  supplierSearch.value="";
+    supplierResults.appendChild(d);
+  })
 }
 
-/* صنف */
-function filterProducts(){
-  productList.innerHTML="";
-  const q=productSearch.value;
-  for(let id in products){
-    if(products[id].name.includes(q)){
-      productList.innerHTML+=`<div onclick="selectProduct('${id}')">${products[id].name}</div>`;
+// بحث أصناف
+db.ref("items").on("value",s=>{
+  window.itemsDB=s.val()||{};
+});
+itemSearch.oninput=()=>{
+  itemResults.innerHTML="";
+  Object.values(itemsDB||{}).filter(x=>x.name.includes(itemSearch.value))
+  .forEach(i=>{
+    const d=document.createElement("div");
+    d.textContent=i.name;
+    d.onclick=()=>{
+      itemSearch.value=i.name;
+      selectedItem=i;
+      itemResults.innerHTML="";
     }
-  }
-}
-function selectProduct(id){
-  currentProduct=products[id];
-  selectedProduct.innerText=currentProduct.name;
-  publicPrice.value=currentProduct.publicPrice;
-  productList.innerHTML="";
+    itemResults.appendChild(d);
+  })
 }
 
-/* إضافة صنف */
 function addItem(){
-  const discount=((currentProduct.publicPrice-buyPrice.value)/currentProduct.publicPrice*100).toFixed(2);
-  items.push({
-    name:currentProduct.name,
-    qty:+qty.value,
-    publicPrice:currentProduct.publicPrice,
-    buyPrice:+buyPrice.value,
-    discount
-  });
-  renderItems();
+  if(!selectedItem)return alert("اختر صنف");
+  const q=+qty.value,b=+bonus.value,p=+buyPrice.value;
+  const pub=+selectedItem.publicPrice;
+  const disc=((pub-p)/pub*100).toFixed(1);
+  const total=q*p;
+  items.push({name:selectedItem.name,q,b,pub,p,disc,total});
+  render();
 }
 
-/* عرض */
-function renderItems(){
+function render(){
+  itemsBody.innerHTML="";
   let tp=0,tb=0;
-  itemsTable.innerHTML="";
   items.forEach(i=>{
-    tp+=i.publicPrice*i.qty;
-    tb+=i.buyPrice*i.qty;
-    itemsTable.innerHTML+=`
+    tp+=i.q*i.pub;
+    tb+=i.total;
+    itemsBody.innerHTML+=`
     <tr>
       <td>${i.name}</td>
-      <td>${i.qty}</td>
-      <td>${i.publicPrice}</td>
-      <td>${i.buyPrice}</td>
-      <td>${i.discount}%</td>
+      <td>${i.q}</td>
+      <td>${i.b}</td>
+      <td>${i.pub}</td>
+      <td>${i.p}</td>
+      <td>${i.disc}%</td>
+      <td>${i.total}</td>
     </tr>`;
   });
-  totalPublic.innerText=tp;
-  totalBuy.innerText=tb;
-  totalDiscount.innerText=tp-tb;
-  netTotal.innerText=tb;
+  totalPublic.textContent=tp;
+  totalBuy.textContent=tb;
+  totalDiscount.textContent=(tp-tb).toFixed(2);
+  netTotal.textContent=tb;
 }
 
-/* حفظ */
 function saveInvoice(){
-  db.ref("purchaseInvoices").push({
-    date:invDate.value,
-    day:invDay.value,
-    supplier:currentSupplier,
+  const id=Date.now();
+  db.ref("purchaseInvoices/"+id).set({
+    date:date.value,
+    day:day.value,
+    supplier:selectedSupplier.name,
     notes:notes.value,
     items,
-    netTotal:netTotal.innerText
-  });
-  alert("تم الحفظ ✔");
-  items=[];
-  renderItems();
-}
-
-/* ===== Modal ===== */
-function openModal(){modal.style.display="flex"}
-function closeModal(){modal.style.display="none"}
-
-function applyFilter(){
-  db.ref("purchaseInvoices").once("value",s=>{
-    oldInvoices.innerHTML="";
-    const d=s.val()||{};
-    for(let id in d){
-      if(
-        (filterDate.value && d[id].date!==filterDate.value) ||
-        (filterSupplier.value && d[id].supplier!==filterSupplier.value)
-      ) continue;
-
-      oldInvoices.innerHTML+=`
-      <div class="card">
-        تاريخ: ${d[id].date} | مورد: ${d[id].supplier}<br>
-        صافي: ${d[id].netTotal}
-        <button onclick='printInvoice(${JSON.stringify(d[id])})'>🖨️ طباعة</button>
-      </div>`;
+    totals:{
+      public:totalPublic.textContent,
+      buy:totalBuy.textContent,
+      discount:totalDiscount.textContent,
+      net:netTotal.textContent
     }
   });
+  alert("تم حفظ الفاتورة");
 }
 
-/* طباعة حرارية */
-function printInvoice(inv){
-  const w=window.open("","","width=300");
-  w.document.write(`
-  <body style="font-family:tahoma;font-size:11px;width:58mm">
-  <center><b>فاتورة مشتريات</b><br>${inv.date}<br>${inv.supplier}</center><hr>
-  ${inv.items.map(i=>`${i.name} × ${i.qty}<br>ج:${i.publicPrice} ش:${i.buyPrice}<br>`).join("")}
-  <hr><b>الصافي: ${inv.netTotal}</b>
-  </body>
-  `);
-  w.print(); w.close();
+function openPrev(){
+  alert("صفحة الفواتير السابقة + الطباعة الحرارية تكون في صفحة منفصلة");
 }
 </script>
 
 </body>
 </html>
+
